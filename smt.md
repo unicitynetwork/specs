@@ -2,21 +2,21 @@
 
 ## Path Compression
 
-The aggregation tree in Unicity is an SMT (sparse Merkle tree) maintained in the "compressed paths" form. This means that only non-empty leaves and generally only parent nodes with two child nodes are kept explicitly. (A root node is the exception in that it may have only one or even zero child nodes.)
+The aggregation tree in Unicity is a sparse Merkle tree (SMT) maintained in the "compressed paths" form. This means that only non-empty leaves and generally only parent nodes with two child nodes are kept explicitly. (A root node is the exception in that it may have only one or even zero child nodes.)
 
-The figure below shows a tree with all non-empty nodes retained on the left and the same tree with path compression applied on the right. In both cases, each edge is labelled with the description of the path from the child node to the parent node.
+The figure below shows a tree with all non-empty nodes retained (on the left) and the same tree with path compression applied (on the right). In both cases, each edge is labelled with the description of the path from the child node to the parent node.
 
 <img src="smt-fig-path-compr.svg" width="400" />
 
-The hash value of a leaf node is `hash(path, data)` where `path` is the label on the edge connecting the node to its parent. The hash value of a non-leaf node (also called a branch node) is `hash(path, left, right)` where `path` is the label on the edge connecting the node to its parent and `left` and `right` are the hash values of the child nodes.
+The hash value of a leaf node is `hash(path, data)` where `path` is the label on the edge connecting the node to its parent. The hash value of a non-leaf node (also called a branch node) is `hash(path, left, right)` where `path` is the label on the edge connecting the node to its parent and `left` and `right` are the hash values of the child nodes. For hashing the root node, the `path` is taken to be an empty (zero-length) bit-string.
 
-## CBOR serialization
+## CBOR Serialization
 
-For hashing and signing, data structures are serialized in CBOR (Concise Binary Object Representation, IETF RFC 8949) using the deterministic encoding rules (Sec. 4.2 of the 8949).
+For hashing and signing, data structures are serialized in Concise Binary Object Representation (CBOR, IETF RFC 8949) using the deterministic encoding rules (Sec. 4.2 of the RFC).
 
-Tuples are encoded as CBOR arrays in the natural way: a tuple `T` consisting of `N` elements, denoted `(T[1], T[2], ..., T[N])`, is encoded as an `N`-element CBOR array. A missing value is encoded as the CBOR simple value `null`.
+Tuples are encoded as CBOR arrays in the natural way: a tuple consisting of *N* elements is encoded as an *N*-element CBOR array. A missing value is encoded as the CBOR simple value `null`.
 
-Bit-strings are represented as follows:
+As there's no native bit-string type in CBOR, bit-strings are represented as follows:
 
 - one 1-bit is prepended to the original bit-string;
 - zero to seven 0-bits are prepended to the result of the previous step so that the total number of bits is a multiple of 8;
