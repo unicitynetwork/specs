@@ -1,0 +1,13 @@
+<svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .edge {
+      font: normal 12px sans-serif;
+    }
+  </style>
+
+  <g transform="translate(5,0)">
+    <circle cx="50" cy="10" r="2" fill="black" />
+    <circle cx="30" cy="50" r="2" fill="black" />
+    <path d="M 50,10 l -20,+40" stroke="black" /> <text x="18" y="45" class="edge">00</text>
+  </g>
+</svg>
