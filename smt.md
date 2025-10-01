@@ -22,7 +22,7 @@ As there's no native bit-string type in CBOR, bit-strings are represented as fol
 - zero to seven 0-bits are prepended to the result of the previous step so that the total number of bits is a multiple of 8;
 - the result of the previous step is encoded as a CBOR byte-string in the left-to-right, highest-to-lowest order.
 
-For example, the 12-bit string `0101'1010'1111` is padded to the 16-bit string `0001'0101'1010'1111` and then encoded as a the 3-byte sequence `0x42` (byte-string, length 2), `0x15` (the padding `0001` and the bits `0101`), `0xaf` (the bits `1010'1111`).
+For example, the 12-bit string `0101'1010'1111` is padded to the 16-bit string `0001'0101'1010'1111` and then encoded as the 3-byte sequence `0x42` (byte-string, length 2), `0x15` (the padding `0001` and the bits `0101`), `0xaf` (the bits `1010'1111`).
 
 Hash values, although frequently defined as general bit-strings in cryptographic theory, in practice always have bit-lengths divisible by 8 and are encoded as simple CBOR byte-strings with no padding.
 
@@ -46,7 +46,7 @@ CBOR encoding, annotated:
 ```
 
 ```
-sha256(83'4101'f6'f6) = 1e54402898172f2948615fb17627733abbd120a85381c624ad060d28321be672
+sha256(83'4101'F6'F6) = 1e54402898172f2948615fb17627733abbd120a85381c624ad060d28321be672
 ```
 
 ### Left Child Only
