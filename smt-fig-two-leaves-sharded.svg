@@ -9,10 +9,14 @@
   </style>
 
   <g transform="translate(0,0)">
-    <path d="M 50,10 l -20,+40" stroke="black" /> <text x="18" y="45" class="edge">00</text>
-    <path d="M 50,10 l +20,+40" stroke="black" /> <text x="68" y="45" class="edge">11</text>
+    <path d="M 50,10 l -10,+20" stroke="black" /> <text x="35" y="25" class="edge">0</text>
+    <path d="M 40,30 l -10,+20" stroke="black" /> <text x="25" y="45" class="edge">0</text>
+    <path d="M 50,10 l +10,+20" stroke="black" /> <text x="58" y="25" class="edge">1</text>
+    <path d="M 60,30 l +10,+20" stroke="black" /> <text x="68" y="45" class="edge">1</text>
     <circle cx="50" cy="10" r="2" fill="black" />
+    <circle cx="40" cy="30" r="2" fill="red" />
     <circle cx="30" cy="50" r="2" fill="black" /> <text x="22" y="65" class="data">"a"</text>
+    <circle cx="60" cy="30" r="2" fill="red" />
     <circle cx="70" cy="50" r="2" fill="black" /> <text x="62" y="65" class="data">"b"</text>
   </g>
 </svg>
