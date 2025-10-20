@@ -7,6 +7,7 @@
       font: normal 12px sans-serif;
     }
   </style>
+  <rect width="100%" height="100%" fill="#dddddd" />
 
   <g transform="translate(0,0)">
     <path d="M 50,10 l -10,+20" stroke="black" /> <text x="35" y="25" class="edge">0</text>
