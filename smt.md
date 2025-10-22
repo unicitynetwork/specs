@@ -749,7 +749,7 @@ The inclusion proof from the shard aggregator: \
 
 The complete inclusion proof: \
 `[h'04', h'61']` \
-`[h'02', h'ea0c1acccbc165a448c4d60d05c0ee3184cb463e6212d5c8c7b5fabe1d70eba1']`
+`[h'02', h'ea0c1acccbc165a448c4d60d05c0ee3184cb463e6212d5c8c7b5fabe1d70eba1']` \
 `[h'02', null]` \
 `[h'01', h'4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329']`
 
@@ -766,7 +766,7 @@ The inclusion proof from the shard aggregator: \
 
 The complete inclusion proof: \
 `[h'07', h'62']` \
-`[h'02', h'973634e81de87e025343da667dc296872682b66b51432879999238aee6d0373c']`
+`[h'02', h'973634e81de87e025343da667dc296872682b66b51432879999238aee6d0373c']` \
 `[h'02', null]` \
 `[h'01', h'4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329']`
 
