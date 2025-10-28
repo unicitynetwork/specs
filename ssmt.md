@@ -1,4 +1,4 @@
-# Sum-Certifying Merkle Tree
+# Sum-Certifying Sparse Merkle Tree
 
 ## General Structure
 
@@ -6,7 +6,7 @@ Sum-certifying Merkle trees in Unicity are implemented as an extension of sparse
 
 The figure below shows a sum-certifying tree with all nodes labelled with their associated values and edges labelled with the descriptions of the paths.
 
-<img src="scmt-fig-augment.svg" width="200" />
+<img src="ssmt-fig-augment.svg" width="200" />
 
 The hash value of a leaf node is `hash(path, data, value)` where `path` is the label on the edge connecting the node to its parent. The hash value of a non-leaf node (also called a branch node) is `hash(path, left-hash, left-value, right-hash, right-value)` where `path` is the label on the edge connecting the node to its parent, `left-hash` and `right-hash` are the hash values of the child nodes, and `left-value` and `right-value` are the values associated with the child nodes. As with regular SMT, the `path` of the root node is taken to be an empty (zero-length) bit-string.
 
@@ -21,7 +21,7 @@ Suppose the inclusion proof for some leaf node is `(path[1], data[1], value[1]),
 - `sum = value[1]`
 - if the rightmost bit of `path[1]` is 0, then \
    `hash[2] = hash(path[2], hash[1], sum, data[2], value[2])`, else \
-   `hash[2] = hash(path[2], data[2], value[2], hash[1], sum)` \
+   `hash[2] = hash(path[2], data[2], value[2], hash[1], sum)`
 - if `value[2]` is negative or `sum + value[2]` would overflow, fail with error
 - `sum = sum + value[2]`
 - ...
