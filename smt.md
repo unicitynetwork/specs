@@ -1,6 +1,21 @@
 # Sparse Merkle Tree
 
-## Path Compression
+## Contents
+
+- [Path Compression](#path-compr)
+- [Inclusion Proofs](#incl-proof)
+- [Sharding](#sharding)
+- [CBOR Serialization](#cbor)
+- [Examples](#examples)
+    - [Singleton](#root)
+    - [Left Child Only](#left)
+    - [Right Child Only](#right)
+    - [Two Leaves](#two)
+    - [Two Leaves, Sharded](#two-sharded)
+    - [Four Leaves](#four)
+    - [Four Leaves, Sharded](#four-sharded)
+
+## Path Compression <a name="path-compr">
 
 The aggregation tree in Unicity is a sparse Merkle tree (SMT) maintained in the "compressed paths" form. This means that generally only non-empty leaves and only parent nodes with two child nodes are kept explicitly. (The root node is an exception in that it may have only one or even zero child nodes.)
 
@@ -10,7 +25,7 @@ The figure below shows a tree with all non-empty nodes retained (on the left) an
 
 The hash value of a leaf node is `hash(path, data)` where `path` is the label on the edge connecting the node to its parent. The hash value of a non-leaf node (also called a branch node) is `hash(path, left, right)` where `path` is the label on the edge connecting the node to its parent and `left` and `right` are the hash values of the child nodes. For hashing the root node, the `path` is taken to be an empty (zero-length) bit-string.
 
-## Inclusion Proofs
+## Inclusion Proofs <a name="incl-proof">
 
 The inclusion proof for any leaf can be presented as a sequence of `(path, data)` pairs. The first pair in the sequence contains the `path` and `data` arguments from the `hash(path, data)` expression of the leaf node's hash value. In each of the subsequent pairs, the `path` element is the `path` argument from the `hash(path, left, right)` expression of the next node on the path from the leaf to the root, and the `data` element is the "sibling" hash value. That is, if the starting leaf is in the left sub-tree of the branch node, then `data` contains the `right` argument from the corresponding `hash(path, left, right)` expression, and vice versa.
 
@@ -27,7 +42,7 @@ Suppose the inclusion proof for some leaf node is `(path[1], data[1]), (path[2],
 
 If, after these steps, `hash[N]` matches the root hash of the tree, this proves that the leaf with the path to root equal to `path[1] + path[2] + ... + path[N]` indeed contained `data[1]` in the SMT from which the sequence was extracted.
 
-## Sharding
+## Sharding <a name="sharding">
 
 In sharded setting, the key space is partitioned according to a fixed number of bits of the key. This way, each shard aggregator manages a sub-tree (the two lower dashed boxes in each of the figures below) and the parent aggregator joins the sub-trees into a single tree (the higher dashed boxes).
 
@@ -41,7 +56,7 @@ Note that the inclusion proof extracted from the parent aggregator's tree can't 
 
 However, clients of the Unicity service need not concern themselves with this distinction, because the shard aggregator combines the inclusion proof received from the parent aggregator with its own and the resulting complete inclusion proof delivered to clients can always be verified with the regular rule defined in the previous section.
 
-## CBOR Serialization
+## CBOR Serialization <a name="cbor">
 
 For hashing and signing, data structures are serialized in Concise Binary Object Representation (CBOR, IETF RFC 8949) using the deterministic encoding rules (Sec. 4.2 of the RFC).
 
@@ -57,9 +72,9 @@ For example, the 12-bit string `0101'1010'1111` is padded to the 16-bit string `
 
 Hash values, although frequently defined as general bit-strings in cryptographic theory, in practice always have bit-lengths divisible by 8 and are encoded as simple CBOR byte-strings with no padding.
 
-## Examples
+## Examples <a name="examples">
 
-### Singleton
+### Singleton <a name="root">
 
 A "singleton" tree consisting of a root node with no child nodes:
 
@@ -84,7 +99,7 @@ sha256(83'4101'F6'F6) = 1e54402898172f2948615fb17627733abbd120a85381c624ad060d28
 
 No inclusion proof can be extracted from such a tree.
 
-### Left Child Only
+### Left Child Only <a name="left">
 
 A tree consisting of a root node with a left child:
 
@@ -133,7 +148,7 @@ The inclusion proof for the only leaf is \
 `[h'04', h'61']` \
 `[h'01', null]`
 
-### Right Child Only
+### Right Child Only <a name="right">
 
 A tree consisting of a root node with a right child:
 
@@ -182,7 +197,7 @@ The inclusion proof for the only leaf is \
 `[h'07', h'62']` \
 `[h'01', null]`
 
-### Two Leaves
+### Two Leaves <a name="two">
 
 A tree consisting of a root node with a left and a right child:
 
@@ -254,7 +269,7 @@ The inclusion proof for the right leaf: \
 `[h'07', h'62']` \
 `[h'01', h'973634e81de87e025343da667dc296872682b66b51432879999238aee6d0373c']`
 
-### Two Leaves, Sharded
+### Two Leaves, Sharded <a name="two-sharded">
 
 A tree consisting of a root node with two leaves, managed as two shards with 1-bit identifiers `0` and `1`, respectively:
 
@@ -394,7 +409,7 @@ The complete inclusion proof for the right leaf, obtained by concatenating the s
 `[h'03', null]` \
 `[h'01', h'256aedd9f31e69a4b0803616beab77234bae5dff519a10e519a0753be49f0534']`
 
-### Four Leaves
+### Four Leaves <a name="four">
 
 A tree containing four leaves:
 
@@ -552,7 +567,7 @@ The inclusion proof for leaf "d" is \
 `[h'07', h'6338c7ad0dc943f4e31052cdf2e9751fcaee9ff50a3e1bda97c51e05e7e7c79f']` \
 `[h'01', h'571b7ef9469e4516ecc628ac0e7bbfb9032d739bcd44613b3594f03c0b208a67']`
 
-### Four Leaves, Sharded
+### Four Leaves, Sharded <a name="four-sharded">
 
 A tree containing four leaves, managed as four shards with 2-bit identifiers `00`, `10`, `01` and `11`, respectively (where the shards `10` and `01` are empty):
 
