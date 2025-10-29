@@ -41,7 +41,7 @@ We currently do not define sharding for sum-certifying trees.
 
 We apply the same serialization rules to sum-certifying trees as to the regular SMTs.
 
-The values associated with nodes of sum-certifying trees in Unicity may exceed the capacity of CBOR's native 64-bit unsigned integers. For that reason, and in the interest of uniformity of representation, the values in sum-certifying trees are always serialized as byte sequences, ordered from the most siginficant to the least significant bits (also known as big endian or network byte order), with leading zero bytes omitted (in particular, a zero value is serialized as a zero-length byte string).
+The values associated with nodes of sum-certifying trees in Unicity may exceed the capacity of CBOR's native 64-bit unsigned integers. For that reason, and in the interest of uniformity of representation, the values in sum-certifying trees are always serialized as byte sequences, ordered from the most siginficant to the least significant bits (also known as big endian or network byte order), with leading zero bytes omitted (in particular, a zero value is serialized as a zero-length byte string). Note that, on the data level, there can be no negative values and no overflows, so the "`value[i]` is negative" and "`sum` + `value[i]` would overflow" conditions in the inclusion proof verification above are only to prevent exploitation of potential implementation limits.
 
 ## Examples
 
