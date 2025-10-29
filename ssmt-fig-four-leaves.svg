@@ -1,0 +1,32 @@
+<svg viewBox="0 0 100 95" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .edge {
+      font: normal 12px sans-serif;
+    }
+    .data {
+      font: normal 12px sans-serif;
+      fill: blue;
+    }
+    .value {
+      font: normal 12px sans-serif;
+      fill: red;
+    }
+  </style>
+  <rect width="100%" height="100%" fill="#dddddd" />
+
+  <g transform="translate(0,0)">
+    <path d="M 50,10 l -20,+40" stroke="black" /> <text x="18" y="45" class="edge">00</text>
+    <path d="M 30,50 l -10,+20" stroke="black" /> <text x="15" y="65" class="edge">0</text>
+    <path d="M 30,50 l +10,+20" stroke="black" /> <text x="38" y="65" class="edge">1</text>
+    <path d="M 50,10 l +20,+40" stroke="black" /> <text x="68" y="45" class="edge">11</text>
+    <path d="M 70,50 l -10,+20" stroke="black" /> <text x="55" y="65" class="edge">0</text>
+    <path d="M 70,50 l +10,+20" stroke="black" /> <text x="78" y="65" class="edge">1</text>
+    <circle cx="50" cy="10" r="2" fill="black" /> <text x="54" y="15" class="value">10</text>
+    <circle cx="30" cy="50" r="2" fill="black" /> <text x="34" y="55" class="value">3</text>
+    <circle cx="20" cy="70" r="2" fill="black" /> <text x="23" y="75" class="value">1</text> <text x="10" y="85" class="data">"a"</text>
+    <circle cx="40" cy="70" r="2" fill="black" /> <text x="43" y="75" class="value">2</text> <text x="30" y="85" class="data">"b"</text>
+    <circle cx="70" cy="50" r="2" fill="black" /> <text x="74" y="55" class="value">7</text>
+    <circle cx="60" cy="70" r="2" fill="black" /> <text x="63" y="75" class="value">3</text> <text x="50" y="85" class="data">"c"</text>
+    <circle cx="80" cy="70" r="2" fill="black" /> <text x="83" y="75" class="value">4</text> <text x="70" y="85" class="data">"d"</text>
+  </g>
+</svg>
