@@ -12,7 +12,7 @@ The hash value of a leaf node is `hash(path, data)` where `path` is the label on
 
 ## Inclusion Proofs
 
-The inclusion proof for any leaf can be presented as a sequence of `(path, data)` pairs. The first pair in the sequence contains the `path` and `data` arguments from the `hash(path, data)` expression of the leaf node's hash value. In each of the subsequent pairs, the `path` element is the `path` argument from the `hash(path, left, right)` expression of the next node on the path from the leaf to the root, and the `data` element is the "sibling" hash value. That is, if the starting leaf is in the left sub-tree of the branch node, then `data` will contain the `right` argument from the corresponding `hash(path, left, right)` expression, and vice versa.
+The inclusion proof for any leaf can be presented as a sequence of `(path, data)` pairs. The first pair in the sequence contains the `path` and `data` arguments from the `hash(path, data)` expression of the leaf node's hash value. In each of the subsequent pairs, the `path` element is the `path` argument from the `hash(path, left, right)` expression of the next node on the path from the leaf to the root, and the `data` element is the "sibling" hash value. That is, if the starting leaf is in the left sub-tree of the branch node, then `data` contains the `right` argument from the corresponding `hash(path, left, right)` expression, and vice versa.
 
 Suppose the inclusion proof for some leaf node is `(path[1], data[1]), (path[2], data[2]), ..., (path[N], data[N])`. It's easy to verify that the root hash of the tree can then be recomputed as follows:
 

@@ -2,17 +2,17 @@
 
 ## General Structure
 
-Sum-certifying Merkle trees in Unicity are implemented as an extension of sparse Merkle trees (SMT) where each node has an associated non-negative value; for a leaf node it's the value associated with the data in the leaf; for a non-leaf node it's the sum of values associated with the leaf nodes in its sub-tree.
+Sum-certifying Merkle trees in Unicity are implemented as an extension of sparse Merkle trees (SMT) where each node has an associated non-negative integer value; for a leaf node it's the value associated with the data in the leaf; for a non-leaf node it's the sum of values associated with the leaf nodes in its sub-tree.
 
 The figure below shows a sum-certifying tree with all nodes labelled with their associated values and edges labelled with the descriptions of the paths.
 
 <img src="ssmt-fig-augment.svg" width="200" />
 
-The hash value of a leaf node is `hash(path, data, value)` where `path` is the label on the edge connecting the node to its parent. The hash value of a non-leaf node (also called a branch node) is `hash(path, left-hash, left-value, right-hash, right-value)` where `path` is the label on the edge connecting the node to its parent, `left-hash` and `right-hash` are the hash values of the child nodes, and `left-value` and `right-value` are the values associated with the child nodes. As with regular SMT, the `path` of the root node is taken to be an empty (zero-length) bit-string.
+The hash value of a leaf node is `hash(path, data, value)` where `path` is the label on the edge connecting the node to its parent. The hash value of a non-leaf node (also called a branch node) is `hash(path, left-hash, left-value, right-hash, right-value)` where `path` is the label on the edge connecting the node to its parent, `left-hash` and `right-hash` are the hash values of the child nodes, and `left-value` and `right-value` are the values associated with the child nodes. As with regular SMT, the `path` of the root node is taken to be an empty (zero-length) bit-string. The value associated with a `null` branch is 0.
 
 ## Inclusion Proofs
 
-The inclusion proof for any leaf can be presented as a sequence of `(path, data, value)` triples. The first triple in the sequence contains the `path`, `data` and `value` arguments from the `hash(path, data, value)` expression of the leaf node's hash value. In each of the subsequent pairs, the `path` element is the `path` argument from the `hash(path, left-hash, left-value, right-hash, right-value)` expression of the next node on the path from the leaf to the root, the `data` element is the "sibling" hash value, and the `value` element is the value associated with the "sibling" node. That is, if the starting leaf is in the left sub-tree of the branch node, then `data` and `value` will contain the `right-hash` and `right-value` arguments from the corresponding `hash(path, left-hash, left-value, right-hash, right-value)` expression, and vice versa.
+The inclusion proof for any leaf can be presented as a sequence of `(path, data, value)` triples. The first triple in the sequence contains the `path`, `data` and `value` arguments from the `hash(path, data, value)` expression of the leaf node's hash value. In each of the subsequent pairs, the `path` element is the `path` argument from the `hash(path, left-hash, left-value, right-hash, right-value)` expression of the next node on the path from the leaf to the root, the `data` element is the "sibling" hash value, and the `value` element is the value associated with the "sibling" node. That is, if the starting leaf is in the left sub-tree of the branch node, then `data` and `value` contain the `right-hash` and `right-value` arguments from the corresponding `hash(path, left-hash, left-value, right-hash, right-value)` expression, and vice versa.
 
 Suppose the inclusion proof for some leaf node is `(path[1], data[1], value[1]), (path[2], data[2], value[2]), ..., (path[N], data[N], value[N])`. It's easy to verify that the root hash of the tree can then be recomputed as follows:
 
@@ -40,6 +40,8 @@ We currently do not define sharding for sum-certifying trees.
 ## CBOR Serialization
 
 We apply the same serialization rules to sum-certifying trees as to the regular SMTs.
+
+The values associated with nodes of sum-certifying trees in Unicity may exceed the capacity of CBOR's native 64-bit unsigned integers. For that reason, and in the interest of uniformity of representation, the values in sum-certifying trees are always serialized as byte sequences, ordered from the most siginficant to the least significant bits (also known as big endian or network byte order), with leading zero bytes omitted (in particular, a zero value is serialized as a zero-length byte string).
 
 ## Examples
 
