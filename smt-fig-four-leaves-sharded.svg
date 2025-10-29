@@ -5,6 +5,7 @@
     }
     .data {
       font: normal 12px sans-serif;
+      fill: blue;
     }
   </style>
   <rect width="100%" height="100%" fill="#dddddd" />
