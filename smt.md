@@ -50,7 +50,7 @@ In sharded setting, the key space is partitioned according to a fixed number of 
 
 The root nodes of the shard trees are the leaf nodes of the parent tree. To present a stable interface to the shard aggregators, the parent aggregator's tree is not really a sparse one. Instead, it has all the leaves present, and as a corollary also all the internal nodes (as shown on the right in the figure above), even if some leaves are null because there are no entries in the corresponding shard tree. The latter will not happen in practice, because there is no need to shard a tree that has so few entries, but is defined here for completeness of specification.
 
-To facilitate generation of the inclusion proofs as described in the previous section, each shard aggregator computes its root hash as `hash(p, left, right)`, where `p` is the 1-bit "path" consisting of the rightmost bit of its shard identifier. Because the rightmost bit of the shard identifier determines whether the shard's root hash is the left or the right child of its parent node in the parent aggregator's tree, this yields the same value as if the parent aggregator had computed the whole tree by itself.
+To facilitate generation of the inclusion proofs as described in the previous section, each shard aggregator computes its root hash as `hash(p, left, right)`, where `p` is the 1-bit "path" consisting of the leftmost bit of its shard identifier. Because the leftmost bit of the shard identifier determines whether the shard's root hash is the left or the right child of its parent node in the parent aggregator's tree, this yields the same value as if the parent aggregator had computed the whole tree by itself.
 
 Note that the inclusion proof extracted from the parent aggregator's tree can't be verified following the steps shown in the previous section. Instead, a slightly modified version would have to be used, because the values in the leaf nodes of the parent tree (shown in red in the figure above) already contain the hash values to be used as the `left` and `right` arguments in the `hash(path, left, right)` expressions of their parent nodes (shown in blue in the figure above). Therefore, the correct first step of the verification algorithm in this case is just `hash[1] = data[1]`.
 
@@ -569,54 +569,54 @@ The inclusion proof for leaf "d" is \
 
 ### Four Leaves, Sharded <a name="four-sharded">
 
-A tree containing four leaves, managed as four shards with 2-bit identifiers `00`, `10`, `01` and `11`, respectively (where the shards `10` and `01` are empty):
+A tree containing four leaves, managed as four shards with 2-bit identifiers `00`, `10`, `01` and `11`, respectively (where the shards `00` and `11` are empty):
 
 <img src="smt-fig-four-leaves-sharded.svg" width="240" />
 
-- A leaf with 4-bit key `0000` and 1-byte value "a".
-- A leaf with 4-bit key `1100` and 1-byte value "b".
-- A leaf with 4-bit key `0011` and 1-byte value "c".
-- A leaf with 4-bit key `1111` and 1-byte value "d".
+- A leaf with 4-bit key `0010` and 1-byte value "a".
+- A leaf with 4-bit key `1010` and 1-byte value "b".
+- A leaf with 4-bit key `0101` and 1-byte value "c".
+- A leaf with 4-bit key `1101` and 1-byte value "d".
 
-#### Left Shard
+#### Middle-Left Shard
 
-**Left Leaf**
+**Leaf "a"**
 
-CBOR diagnostic notation: `[h'04', h'61']`
+CBOR diagnostic notation: `[h'02', h'61']`
 
 CBOR encoding, annotated:
 ```
 82         # array(2)
    41      # bytes(1)
-      04   # 0000'0100
+      02   # 0000'0010
    41      # bytes(1)
       61   # "a"
 ```
 
 ```
-sha256(82'4104'4161) = 973634e81de87e025343da667dc296872682b66b51432879999238aee6d0373c
+sha256(82'4102'4161) = 2222ead87965dbd1046ff0f4d09f9901222b0426681d222aff2954d7f4dcc1d3
 ```
 
-**Right Leaf**
+**Leaf "b"**
 
-CBOR diagnostic notation: `[h'07', h'62']`
+CBOR diagnostic notation: `[h'03', h'62']`
 
 CBOR encoding, annotated:
 ```
 82         # array(2)
    41      # bytes(1)
-      07   # 0000'0111
+      03   # 0000'0011
    41      # bytes(1)
       62   # "b"
 ```
 
 ```
-sha256(82'4107'4162) = ea0c1acccbc165a448c4d60d05c0ee3184cb463e6212d5c8c7b5fabe1d70eba1
+sha256(82'4103'4162) = 50e3c959cf3fc159f5138e4e2638003a5051ce62ab59dc4605ac8d7a069b35eb
 ```
 
-**Root Node**
+**Parent of "a" and "b"**
 
-CBOR diagnostic notation: `[h'02', h'973634e81de87e025343da667dc296872682b66b51432879999238aee6d0373c', h'ea0c1acccbc165a448c4d60d05c0ee3184cb463e6212d5c8c7b5fabe1d70eba1']`
+CBOR diagnostic notation: `[h'02', h'2222ead87965dbd1046ff0f4d09f9901222b0426681d222aff2954d7f4dcc1d3', h'50e3c959cf3fc159f5138e4e2638003a5051ce62ab59dc4605ac8d7a069b35eb']`
 
 CBOR encoding, annotated:
 ```
@@ -624,54 +624,72 @@ CBOR encoding, annotated:
    41      # bytes(1)
       02   # 0000'0010
    58 20   # bytes(32)
-      973634E81DE87E025343DA667DC296872682B66B51432879999238AEE6D0373C
+      2222EAD87965DBD1046FF0F4D09F9901222B0426681D222AFF2954D7F4DCC1D3
    58 20   # bytes(32)
-      EA0C1ACCCBC165A448C4D60D05C0EE3184CB463E6212D5C8C7B5FABE1D70EBA1
+      50E3C959CF3FC159F5138E4E2638003A5051CE62AB59DC4605AC8D7A069B35EB
 ```
 
 ```
-sha256(83'4102'5820973634E81DE87E025343DA667DC296872682B66B51432879999238AEE6D0373C'5820EA0C1ACCCBC165A448C4D60D05C0EE3184CB463E6212D5C8C7B5FABE1D70EBA1) = a602dc13e4932c8d58196cdd34b44c44ff457323e7dcec9e5ea05d789bd28936
+sha256(83'4102'58202222EAD87965DBD1046FF0F4D09F9901222B0426681D222AFF2954D7F4DCC1D3'582050E3C959CF3FC159F5138E4E2638003A5051CE62AB59DC4605AC8D7A069B35EB) = afc631129cf648ef8b4ce8e5027ae587f70191fe04e571d48bd89da7c2dc6a81
 ```
 
-#### Right Shard
+**Root Node**
 
-**Left Leaf**
+CBOR diagnostic notation: `[h'03', h'afc631129cf648ef8b4ce8e5027ae587f70191fe04e571d48bd89da7c2dc6a81', null]`
 
-CBOR diagnostic notation: `[h'04', h'63']`
+CBOR encoding, annotated:
+```
+83         # array(3)
+   41      # bytes(1)
+      03   # 0000'0011
+   58 20   # bytes(32)
+      AFC631129CF648EF8B4CE8E5027AE587F70191FE04E571D48BD89DA7C2DC6A81
+   F6      # null
+```
+
+```
+sha256(83'4103'5820AFC631129CF648EF8B4CE8E5027AE587F70191FE04E571D48BD89DA7C2DC6A81'F6) = 10c1dc89e30d51613f2c1a182d16f87fe6709b9735db612adaadaa91955bdaf0
+```
+
+#### Middle-Right Shard
+
+**Leaf "c"**
+
+CBOR diagnostic notation: `[h'02', h'63']`
 
 CBOR encoding, annotated:
 ```
 82         # array(2)
    41      # bytes(1)
-      04   # 0000'0100
+      02   # 0000'0010
    41      # bytes(1)
       63   # "c"
 ```
 
 ```
-sha256(82'4104'4163) = b7ebe6f7b287fe0c50cc082bf09e628e8e30d946e7dedb67eec858d3a4f40ecc
+sha256(82'4102'4163) = 6338c7ad0dc943f4e31052cdf2e9751fcaee9ff50a3e1bda97c51e05e7e7c79f
 ```
 
-**Right Leaf**
+**Leaf "d"**
 
-CBOR diagnostic notation: `[h'07', h'64']`
+CBOR diagnostic notation: `[h'03', h'64']`
 
 CBOR encoding, annotated:
 ```
 82         # array(2)
    41      # bytes(1)
-      07   # 0000'0111
+      03   # 0000'0011
    41      # bytes(1)
       64   # "d"
 ```
 
 ```
-sha256(82'4107'4164) = ae1b7d9907d68f05e67fe3ba78c3427b8907c747c547a915d0c4f94adcb5ce40
+sha256(82'4103'4164) = 3fb43b8e381a3d05470aa184c5695c938c7d7a5d43bd595a936b4dbc2539a669
 ```
 
-**Root Node**
+**Parent of "c" and "d"**
 
-CBOR diagnostic notation: `[h'03', h'b7ebe6f7b287fe0c50cc082bf09e628e8e30d946e7dedb67eec858d3a4f40ecc', h'ae1b7d9907d68f05e67fe3ba78c3427b8907c747c547a915d0c4f94adcb5ce40']`
+CBOR diagnostic notation: `[h'03', h'6338c7ad0dc943f4e31052cdf2e9751fcaee9ff50a3e1bda97c51e05e7e7c79f', h'3fb43b8e381a3d05470aa184c5695c938c7d7a5d43bd595a936b4dbc2539a669']`
 
 CBOR encoding, annotated:
 ```
@@ -679,60 +697,78 @@ CBOR encoding, annotated:
    41      # bytes(1)
       03   # 0000'0011
    58 20   # bytes(32)
-      B7EBE6F7B287FE0C50CC082BF09E628E8E30D946E7DEDB67EEC858D3A4F40ECC
+      6338C7AD0DC943F4E31052CDF2E9751FCAEE9FF50A3E1BDA97C51E05E7E7C79F
    58 20   # bytes(32)
-      AE1B7D9907D68F05E67FE3BA78C3427B8907C747C547A915D0C4F94ADCB5CE40
+      3FB43B8E381A3D05470AA184C5695C938C7D7A5D43BD595A936B4DBC2539A669
 ```
 
 ```
-sha256(83'4103'5820B7EBE6F7B287FE0C50CC082BF09E628E8E30D946E7DEDB67EEC858D3A4F40ECC'5820AE1B7D9907D68F05E67FE3BA78C3427B8907C747C547A915D0C4F94ADCB5CE40) = d1d4fd1c4b4e332427d726c39a2cea17ed4c59bff0458232ccb36199bb8849af
+sha256(83'4103'58206338C7AD0DC943F4E31052CDF2E9751FCAEE9FF50A3E1BDA97C51E05E7E7C79F'58203FB43B8E381A3D05470AA184C5695C938C7D7A5D43BD595A936B4DBC2539A669) = 957b8aaa765b5065e616316573c4d03d153269f8adba2fe2b9ceb6eab0d5f21a
 ```
 
-#### Parent
+**Root Node**
 
-Root of left shard: `a602dc13e4932c8d58196cdd34b44c44ff457323e7dcec9e5ea05d789bd28936`
-
-Root of right shard: `d1d4fd1c4b4e332427d726c39a2cea17ed4c59bff0458232ccb36199bb8849af`
-
-**Parent of left and left-middle shards**
-
-CBOR diagnostic notation: `[h'02', h'a602dc13e4932c8d58196cdd34b44c44ff457323e7dcec9e5ea05d789bd28936', null]`
+CBOR diagnostic notation: `[h'02', null, h'957b8aaa765b5065e616316573c4d03d153269f8adba2fe2b9ceb6eab0d5f21a']`
 
 CBOR encoding, annotated:
 ```
 83         # array(3)
    41      # bytes(1)
       02   # 0000'0010
-   58 20   # bytes(32)
-      A602DC13E4932C8D58196CDD34B44C44FF457323E7DCEC9E5EA05D789BD28936
    F6      # null
+   58 20   # bytes(32)
+      957B8AAA765B5065E616316573C4D03D153269F8ADBA2FE2B9CEB6EAB0D5F21A
 ```
 
 ```
-sha256(83'4102'5820A602DC13E4932C8D58196CDD34B44C44FF457323E7DCEC9E5EA05D789BD28936'F6) = 35f40d28e65de3c8aef348674458aa5378e392c95a8e48519fb8765017ee578f
+sha256(83'4102'F6'5820957B8AAA765B5065E616316573C4D03D153269F8ADBA2FE2B9CEB6EAB0D5F21A) = 981d2f4e01189506c5a36430e7774e3f9498c1c4cc27801d8e6400d4965a8860
 ```
 
-**Parent of right-middle and right shards**
+#### Parent
 
-CBOR diagnostic notation: `[h'03', null, h'd1d4fd1c4b4e332427d726c39a2cea17ed4c59bff0458232ccb36199bb8849af']`
+Root of middle-left shard: `10c1dc89e30d51613f2c1a182d16f87fe6709b9735db612adaadaa91955bdaf0`
+
+Root of middle-right shard: `981d2f4e01189506c5a36430e7774e3f9498c1c4cc27801d8e6400d4965a8860`
+
+**Parent of left and middle-left shards**
+
+CBOR diagnostic notation: `[h'02', null, h'10c1dc89e30d51613f2c1a182d16f87fe6709b9735db612adaadaa91955bdaf0']`
+
+CBOR encoding, annotated:
+```
+83         # array(3)
+   41      # bytes(1)
+      02   # 0000'0010
+   F6      # null
+   58 20   # bytes(32)
+      10C1DC89E30D51613F2C1A182D16F87FE6709B9735DB612ADAADAA91955BDAF0
+```
+
+```
+sha256(83'4102'F6'582010C1DC89E30D51613F2C1A182D16F87FE6709B9735DB612ADAADAA91955BDAF0) = 98a5b16cac1bb4684db0f39dec36baa2c4edb1e3c2d2dc01d097ab73a015b5a8
+```
+
+**Parent of middle-right and right shards**
+
+CBOR diagnostic notation: `[h'03', h'981d2f4e01189506c5a36430e7774e3f9498c1c4cc27801d8e6400d4965a8860', null]`
 
 CBOR encoding, annotated:
 ```
 83         # array(3)
    41      # bytes(1)
       03   # 0000'0011
-   F6      # null
    58 20   # bytes(32)
-      D1D4FD1C4B4E332427D726C39A2CEA17ED4C59BFF0458232CCB36199BB8849AF
+      981D2F4E01189506C5A36430E7774E3F9498C1C4CC27801D8E6400D4965A8860
+   F6      # null
 ```
 
 ```
-sha256(83'4103'F6'5820D1D4FD1C4B4E332427D726C39A2CEA17ED4C59BFF0458232CCB36199BB8849AF) = 4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329
+sha256(83'4103'5820981D2F4E01189506C5A36430E7774E3F9498C1C4CC27801D8E6400D4965A8860'F6) = a6cf558550ceb2e350fb85bbc9dc3c31266ef89317184007ce8b50c611886ce7
 ```
 
 **Root Node**
 
-CBOR diagnostic notation: `[h'01', h'35f40d28e65de3c8aef348674458aa5378e392c95a8e48519fb8765017ee578f', h'4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329']`
+CBOR diagnostic notation: `[h'01', h'98a5b16cac1bb4684db0f39dec36baa2c4edb1e3c2d2dc01d097ab73a015b5a8', h'a6cf558550ceb2e350fb85bbc9dc3c31266ef89317184007ce8b50c611886ce7']`
 
 CBOR encoding, annotated:
 ```
@@ -740,13 +776,13 @@ CBOR encoding, annotated:
    41      # bytes(1)
       01   # 0000'0001
    58 20   # bytes(32)
-      35F40D28E65DE3C8AEF348674458AA5378E392C95A8E48519FB8765017EE578F
+      98A5B16CAC1BB4684DB0F39DEC36BAA2C4EDB1E3C2D2DC01D097AB73A015B5A8
    58 20   # bytes(32)
-      4522AF733FCA7FEEDF59A44A738BF757367FC456D042156F5DE46496FCEDC329
+      A6CF558550CEB2E350FB85BBC9DC3C31266EF89317184007CE8B50C611886CE7
 ```
 
 ```
-sha256(83'4101'582035F40D28E65DE3C8AEF348674458AA5378E392C95A8E48519FB8765017EE578F'58204522AF733FCA7FEEDF59A44A738BF757367FC456D042156F5DE46496FCEDC329) = ee27435446dd026d9f6baca2033ebffe2d29d8948eb81bf9250f7512323c6cbc
+sha256(83'4101'582098A5B16CAC1BB4684DB0F39DEC36BAA2C4EDB1E3C2D2DC01D097AB73A015B5A8'5820A6CF558550CEB2E350FB85BBC9DC3C31266EF89317184007CE8B50C611886CE7) = eb1a95574056c988f441a50bd18d0555f038276aecf3d155eb9e008a72afcb45
 ```
 
 #### Inclusion Proofs
@@ -754,67 +790,75 @@ sha256(83'4101'582035F40D28E65DE3C8AEF348674458AA5378E392C95A8E48519FB8765017EE5
 **Leaf "a"**
 
 The inclusion proof from the parent aggregator: \
-`[h'02', h'a602dc13e4932c8d58196cdd34b44c44ff457323e7dcec9e5ea05d789bd28936']` \
+`[h'03', h'10c1dc89e30d51613f2c1a182d16f87fe6709b9735db612adaadaa91955bdaf0']` \
 `[h'02', null]` \
-`[h'01', h'4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329']`
+`[h'01', h'a6cf558550ceb2e350fb85bbc9dc3c31266ef89317184007ce8b50c611886ce7']`
 
 The inclusion proof from the shard aggregator: \
-`[h'04', h'61']` \
-`[h'02', h'ea0c1acccbc165a448c4d60d05c0ee3184cb463e6212d5c8c7b5fabe1d70eba1']`
+`[h'02', h'61']` \
+`[h'02', h'50e3c959cf3fc159f5138e4e2638003a5051ce62ab59dc4605ac8d7a069b35eb']` \
+`[h'03', null]`
 
 The complete inclusion proof: \
-`[h'04', h'61']` \
-`[h'02', h'ea0c1acccbc165a448c4d60d05c0ee3184cb463e6212d5c8c7b5fabe1d70eba1']` \
+`[h'02', h'61']` \
+`[h'02', h'50e3c959cf3fc159f5138e4e2638003a5051ce62ab59dc4605ac8d7a069b35eb']` \
+`[h'03', null]` \
 `[h'02', null]` \
-`[h'01', h'4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329']`
+`[h'01', h'a6cf558550ceb2e350fb85bbc9dc3c31266ef89317184007ce8b50c611886ce7']`
 
 **Leaf "b"**
 
 The inclusion proof from the parent aggregator: \
-`[h'02', h'a602dc13e4932c8d58196cdd34b44c44ff457323e7dcec9e5ea05d789bd28936']` \
+`[h'03', h'10c1dc89e30d51613f2c1a182d16f87fe6709b9735db612adaadaa91955bdaf0']` \
 `[h'02', null]` \
-`[h'01', h'4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329']`
+`[h'01', h'a6cf558550ceb2e350fb85bbc9dc3c31266ef89317184007ce8b50c611886ce7']`
 
 The inclusion proof from the shard aggregator: \
-`[h'07', h'62']` \
-`[h'02', h'973634e81de87e025343da667dc296872682b66b51432879999238aee6d0373c']`
+`[h'03', h'62']` \
+`[h'02', h'2222ead87965dbd1046ff0f4d09f9901222b0426681d222aff2954d7f4dcc1d3']` \
+`[h'03', null]`
 
 The complete inclusion proof: \
-`[h'07', h'62']` \
-`[h'02', h'973634e81de87e025343da667dc296872682b66b51432879999238aee6d0373c']` \
+`[h'03', h'62']` \
+`[h'02', h'2222ead87965dbd1046ff0f4d09f9901222b0426681d222aff2954d7f4dcc1d3']` \
+`[h'03', null]` \
 `[h'02', null]` \
-`[h'01', h'4522af733fca7feedf59a44a738bf757367fc456d042156f5de46496fcedc329']`
+`[h'01', h'a6cf558550ceb2e350fb85bbc9dc3c31266ef89317184007ce8b50c611886ce7']`
 
 **Leaf "c"**
 
 The inclusion proof from the parent aggregator: \
-`[h'03', h'd1d4fd1c4b4e332427d726c39a2cea17ed4c59bff0458232ccb36199bb8849af']` \
+`[h'02', h'981d2f4e01189506c5a36430e7774e3f9498c1c4cc27801d8e6400d4965a8860']` \
 `[h'03', null]` \
-`[h'01', h'35f40d28e65de3c8aef348674458aa5378e392c95a8e48519fb8765017ee578f']`
+`[h'01', h'98a5b16cac1bb4684db0f39dec36baa2c4edb1e3c2d2dc01d097ab73a015b5a8']`
 
 The inclusion proof from the shard aggregator: \
-`[h'04', h'63']` \
-`[h'03', h'ae1b7d9907d68f05e67fe3ba78c3427b8907c747c547a915d0c4f94adcb5ce40']`
+`[h'02', h'63']` \
+`[h'03', h'3fb43b8e381a3d05470aa184c5695c938c7d7a5d43bd595a936b4dbc2539a669']` \
+`[h'02', null]`
 
 The complete inclusion proof: \
-`[h'04', h'63']` \
-`[h'03', h'ae1b7d9907d68f05e67fe3ba78c3427b8907c747c547a915d0c4f94adcb5ce40']` \
+`[h'02', h'63']` \
+`[h'03', h'3fb43b8e381a3d05470aa184c5695c938c7d7a5d43bd595a936b4dbc2539a669']` \
+`[h'02', null]` \
 `[h'03', null]` \
-`[h'01', h'35f40d28e65de3c8aef348674458aa5378e392c95a8e48519fb8765017ee578f']`
+`[h'01', h'98a5b16cac1bb4684db0f39dec36baa2c4edb1e3c2d2dc01d097ab73a015b5a8']`
 
 **Leaf "d"**
 
 The inclusion proof from the parent aggregator: \
-`[h'03', h'd1d4fd1c4b4e332427d726c39a2cea17ed4c59bff0458232ccb36199bb8849af']` \
+`[h'02', h'981d2f4e01189506c5a36430e7774e3f9498c1c4cc27801d8e6400d4965a8860']` \
 `[h'03', null]` \
-`[h'01', h'35f40d28e65de3c8aef348674458aa5378e392c95a8e48519fb8765017ee578f']`
+`[h'01', h'98a5b16cac1bb4684db0f39dec36baa2c4edb1e3c2d2dc01d097ab73a015b5a8']`
 
 The inclusion proof from the shard aggregator: \
-`[h'07', h'64']` \
-`[h'03', h'b7ebe6f7b287fe0c50cc082bf09e628e8e30d946e7dedb67eec858d3a4f40ecc'`
+`[h'03', h'64']` \
+`[h'03', h'6338c7ad0dc943f4e31052cdf2e9751fcaee9ff50a3e1bda97c51e05e7e7c79f']` \
+`[h'02', null]`
 
 The complete inclusion proof: \
-`[h'07', h'64']` \
-`[h'03', h'b7ebe6f7b287fe0c50cc082bf09e628e8e30d946e7dedb67eec858d3a4f40ecc'` \
+`[h'03', h'64']` \
+`[h'03', h'6338c7ad0dc943f4e31052cdf2e9751fcaee9ff50a3e1bda97c51e05e7e7c79f']` \
+`[h'02', null]` \
 `[h'03', null]` \
-`[h'01', h'35f40d28e65de3c8aef348674458aa5378e392c95a8e48519fb8765017ee578f']`
+`[h'01', h'98a5b16cac1bb4684db0f39dec36baa2c4edb1e3c2d2dc01d097ab73a015b5a8']`
