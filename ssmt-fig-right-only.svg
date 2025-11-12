@@ -7,14 +7,16 @@
       font: normal 12px sans-serif;
       fill: blue;
     }
+    .value {
+      font: normal 12px sans-serif;
+      fill: red;
+    }
   </style>
   <rect width="100%" height="100%" fill="#dddddd" />
 
   <g transform="translate(0,0)">
-    <path d="M 50,10 l -20,+40" stroke="black" /> <text x="18" y="45" class="edge">00</text>
     <path d="M 50,10 l +20,+40" stroke="black" /> <text x="68" y="45" class="edge">11</text>
-    <circle cx="50" cy="10" r="2" fill="black" />
-    <circle cx="30" cy="50" r="2" fill="black" /> <text x="22" y="65" class="data">"a"</text>
-    <circle cx="70" cy="50" r="2" fill="black" /> <text x="62" y="65" class="data">"b"</text>
+    <circle cx="50" cy="10" r="2" fill="black" /> <text x="54" y="15" class="value">2</text>
+    <circle cx="70" cy="50" r="2" fill="black" /> <text x="73" y="55" class="value">2</text> <text x="60" y="65" class="data">"b"</text>
   </g>
 </svg>
