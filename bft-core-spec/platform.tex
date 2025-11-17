@@ -65,7 +65,7 @@ A cluster may be divided into one or more \emph{shards}\index{shard} according t
 
 Every aggregation cluster in the Unicity Framework with cluster identifier $\beta$ has a type that is either:
 \begin{enumerate}
-\item a \emph{standard type} (Unicity Tree), or
+\item a \emph{standard type} (SMT), or
 \item a \emph{defined type} that is described as a data structure of type $\mathbb{SD}$.
 \end{enumerate}
 
@@ -103,10 +103,6 @@ A \emph{cluster description record}\index{$\mathcal{CD}$ (cluster description)}\
 
 Instead of $\mathcal{CD}.\mathcal{SD}.x$ (where $x$ is any field of $\mathcal{SD}$), we use the shorthand notation $\mathcal{CD}.x$.
 For standard type clusters, the field $\mathcal{CD}.\mathcal{SD}$ does not exist. In this case, the notation $\mathcal{CD}.x$ will mean the constant value of $x$ of the standard type $\mathsf{st}$.
-
-\section{Unit Type Identifiers}
-
-Each transaction system has a defined list of unit types that it supports. Each unit type has an identifier of type $\mathbb{IT} = \uint{\mathsf{tidlen}}$. The identifier values $16 \ldots 31$ are reserved for common unit types supported across many transaction systems and should not be assigned to unit types specific to just one transaction system.
 
 \section{Unicity Service Request}
 
@@ -166,7 +162,7 @@ After processing a batch of requests, the aggregation layer nodes compute the ne
 
 \section{Certificates}
 
-\emph{Certificates} are compact proofs of inclusion (or sometimes uniqueness, or exclusion) of some data item in an authenticated data structure. Certificates may be chained. Combining certificates, it is possible to put together \emph{proofs} (Sec.~\ref{se:proofs}) proving e.g. execution of a transaction, or existence of a unit state.
+\emph{Certificates} are compact proofs of inclusion (or sometimes uniqueness, or exclusion) of some data item in an authenticated data structure. Certificates may be chained. Combining certificates, it is possible to put together \emph{proofs} (Sec.~\ref{se:proofs}) proving e.g. inclusion, non-inclusion or uniqueness of transactions.
 
 \begin{figure}[ht]
 	\begin{minipage}[h]{0.45\linewidth}
@@ -209,17 +205,8 @@ See Fig.~\ref{fi:inc-proof} for the Inclusion Proof structure and Fig.~\ref{fi:u
 \subsection{Sparse Merkle Tree}\label{sec:smt}
 
 \index{sparse merkle tree}\index{SMT}
-The aggregation layer maintains a \emph{Sparse Merkle Tree} (SMT) in compressed paths form. The SMT maps state identifiers to transaction hashes and provides compact inclusion proofs\footnote{This specification does not cover non-inclusion proofs and consistency (no-deletion) proofs}.
+The aggregation layer maintains a \emph{Sparse Merkle Tree} (SMT) in compressed paths form. The SMT maps state identifiers to transaction hashes and provides compact inclusion proofs. Refer to Appendix \ref{app:smt} for details.
 
-\subsubsection{Path Compression}
-
-The SMT retains only non-empty leaves and only parent nodes with two child nodes explicitly (the root node may have zero, one, or two children). Each edge in the tree is labeled with a path description (a bit-string).
-
-\begin{itemize}
-	\item \textbf{Leaf node hash}: $h = H(p, d)$ where $p$ is the path label to the parent and $d$ is the leaf data
-	\item \textbf{Branch node hash}: $h = H(p, h_L, h_R)$ where $p$ is the path label to the parent, $h_L$ is the left child hash, and $h_R$ is the right child hash
-	\item \textbf{Root node}: Uses empty path $\epsilon$ in hash computation
-\end{itemize}
 
 \subsubsection{SMT Leaf Structure}
 
@@ -230,13 +217,7 @@ An SMT leaf contains a key-value pair:
 		\item $\mathsf{pk}$ -- public key of an unicity token owner
 		\item $h_{\mathsf{st}}$ -- state hash representing the current state of a token
 	\end{itemize}
-	\item \textbf{Value}: Transaction data hash $h_{\mathsf{tx}} = H(D_{\mathsf{tx}})$ of type $\hashtype$, where $D_{\mathsf{tx}}$ is the transaction data containing:
-	\begin{itemize}
-		\item Recipient's public key $\mathsf{pk}'$
-		\item Random blinding mask $x$ for privacy and state evolution
-		\item Recipient's auxiliary data
-		\item Additional optional transaction-specific data, e.g. persistent token attributes if this is a mint transaction
-	\end{itemize}
+	\item \textbf{Value}: Transaction data hash $h_{\mathsf{tx}}$.
 \end{itemize}
 
 The SMT effectively maintains a mapping $\mathsf{sid} \mapsto h_{\mathsf{tx}}$ that proves a state transition from state identifier $\mathsf{sid}$ was authorized via transaction with hash $h_{\mathsf{tx}}$. This prevents double-spending: once a state identifier is registered in the SMT with a transaction hash, that state cannot be spent again.
@@ -258,34 +239,7 @@ The first pair $(p_1, d_1)$ contains the leaf's path segment and data. Each subs
 
 The concatenated path $p_1 \| p_2 \| \ldots \| p_n$ equals the full key $\mathsf{sid}$. The respective value $d_1$ records $h_\mathsf{st}$.
 
-\subsubsection{Verification: $\mathsf{VerifyInclusionCert}$}\label{VerifyInclusionCert}\index{functions!VerifyInclusionCert}
-
-\textbf{Input}:
-\begin{enumerate}
-	\item $\mathsf{sid}$ -- state identifier (key) of type $\hashtype$
-	\item $h_{\mathsf{tx}}$ -- transaction hash (value) of type $\hashtype$
-	\item $C^\mathsf{inc} = \langle (p_1, d_1), (p_2, d_2), \ldots, (p_n, d_n) \rangle$ -- Inclusion Certificate
-	\item $h_{\mathsf{root}}$ -- expected root hash of type $\hashtype$
-\end{enumerate}
-
-\textbf{Output}: \TRUE or \FALSE
-
-\textbf{Computation}:
-\begin{algorithmic}[0]
-	\If {$d_1 \neq h_{\mathsf{tx}}$} \Return \FALSE \EndIf \Comment{Verify leaf data}
-	\If {$p_1 \| p_2 \| \ldots \| p_n \neq \mathsf{sid}$} \Return \FALSE \EndIf \Comment{Verify path}
-	\State $h \gets H(p_1, d_1)$ \Comment{Hash the leaf node}
-	\For {$i \gets 2$ to $n$}
-		\State $b \gets$ rightmost bit of $p_{i-1}$ \Comment{Determine position}
-		\If {$b = 0$}
-			\State $h \gets H(p_i, h, d_i)$ \Comment{Current node is left child}
-		\Else
-			\State $h \gets H(p_i, d_i, h)$ \Comment{Current node is right child}
-		\EndIf
-	\EndFor
-	\State \Return $(h = h_{\mathsf{root}})$
-\end{algorithmic}
-
+The verification function $\Call{smt\_verify\_inclusion}$ is provided in Appendix~\ref{sec:smt-verify-inclusion}.
 
 \subsection{Shard Tree Certificate}\label{se:shard-tree-cert}
 
@@ -494,7 +448,7 @@ $\mathsf{VerifyInclusionProof}$ -- inclusion proof verification function of type
 \textbf{Computation}:
 \begin{algorithmic}[0]
 	\State $h \gets UC.IR.h$ \Comment{Extract SMT root hash from IR}
-	\If {$\neg \mathsf{VerifyInclusionCert}(\mathsf{sid}, h_{\mathsf{tx}}, C^\mathsf{inc}, h)$} \Return \FALSE \EndIf
+	\If {$\neg \Call{smt\_verify\_inclusion}{\mathsf{sid}, h_{\mathsf{tx}}, C^\mathsf{inc}, h}$} \Return \FALSE \EndIf
 	\If {$\neg \mathsf{VerifyUnicityCert}(UC, \mathcal{T})$} \Return \FALSE \EndIf
 	\State \Return \TRUE
 \end{algorithmic}

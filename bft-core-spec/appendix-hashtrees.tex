@@ -240,7 +240,7 @@ Indexed hash trees can be used to provide and verify both inclusion and exclusio
 		\end{itemize}
 \end{itemize}
 
-\section{Sparse Merkle Trees}
+\section{Sparse Merkle Trees}\label{app:smt}
 
 A \emph{Sparse Merkle Tree} (SMT) is a binary Merkle tree that maps keys from a large key space to values, where most positions in the key space are empty. The \emph{path-compressed} form, documented below, retains only non-empty leaves and parent nodes with two children explicitly. The root node is an exception and may have zero, one, or two children.
 
@@ -328,8 +328,8 @@ Verifies an inclusion certificate by reconstructing the root hash.
 
 \textbf{Input}:
 \begin{enumerate}
-	\item $\mathsf{sid} \in \hashtype$ -- state identifier (key)
-	\item $h_{\mathsf{tx}} \in \hashtype$ -- expected transaction hash (value)
+	\item $k \in \hashtype$ -- key
+	\item $v \in \hashtype$ -- value
 	\item $C^\mathsf{inc} = \langle (p_1, d_1), (p_2, d_2), \ldots, (p_n, d_n) \rangle$ -- inclusion certificate
 	\item $h_{\mathsf{root}} \in \hashtype$ -- expected root hash
 \end{enumerate}
@@ -338,11 +338,11 @@ Verifies an inclusion certificate by reconstructing the root hash.
 
 \textbf{Computation}:
 \begin{algorithmic}
-	\Function{smt\_verify\_inclusion}{$\mathsf{sid}, h_{\mathsf{tx}}, C^\mathsf{inc}, h_{\mathsf{root}}$}
-		\If {$d_1 \neq h_{\mathsf{tx}}$}
-			\State \Return \FALSE \Comment{Leaf data mismatch}
+	\Function{smt\_verify\_inclusion}{$k, v, C^\mathsf{inc}, h_{\mathsf{root}}$}
+		\If {$d_1 \neq v$}
+			\State \Return \FALSE \Comment{Leaf value mismatch}
 		\EndIf
-		\If {$p_1 \| p_2 \| \ldots \| p_n \neq \mathsf{sid}$}
+		\If {$p_1 \| p_2 \| \ldots \| p_n \neq k$}
 			\State \Return \FALSE \Comment{Path doesn't match key}
 		\EndIf
 		\State $h \gets H(p_1, d_1)$ \Comment{Hash leaf node}
@@ -366,13 +366,13 @@ Sparse Merkle Trees support both inclusion and exclusion (non-inclusion) proofs 
 
 \subsubsection{Inclusion Proof}
 
-To prove that a key-value pair $(\mathsf{sid}, h_{\mathsf{tx}})$ exists in an SMT:
+To prove that a key-value pair $(k, v)$ exists in an SMT:
 
 \begin{itemize}
 	\item \textbf{Generation}: Extract the path from the leaf to the root, collecting sibling hashes at each level to form $C^\mathsf{inc} = \langle (p_1, d_1), \ldots, (p_n, d_n) \rangle$
 	\item \textbf{Verification}: Check that:
 	\begin{enumerate}
-		\item $\Call{smt\_verify\_inclusion}{\mathsf{sid}, h_{\mathsf{tx}}, C^\mathsf{inc}, h_{\mathsf{root}}} = \TRUE$
+		\item $\Call{smt\_verify\_inclusion}{k, v, C^\mathsf{inc}, h_{\mathsf{root}}} = \TRUE$
 		\item The leaf data $d_1 = h_{\mathsf{tx}}$ matches the claimed value
 		\item The concatenated path equals the claimed key: $p_1 \| \ldots \| p_n = \mathsf{sid}$
 	\end{enumerate}
@@ -380,21 +380,17 @@ To prove that a key-value pair $(\mathsf{sid}, h_{\mathsf{tx}})$ exists in an SM
 
 \subsubsection{Exclusion Proof (Non-Inclusion Proof)}
 
-To prove that a state identifier $\mathsf{sid}_q$ does NOT exist in an SMT:
+To prove that a key $k_q$ does NOT exist in an SMT:
 
 \begin{itemize}
-	\item \textbf{Generation}: Find the position where $\mathsf{sid}_q$ would be located if it existed. Generate a certificate $C^\mathsf{exc} = \langle (p_1, d_1), \ldots, (p_n, d_n) \rangle$ showing this position.
+	\item \textbf{Generation}: Find the position where $k_q$ would be located if it existed. Generate a certificate $C^\mathsf{exc} = \langle (p_1, d_1), \ldots, (p_n, d_n) \rangle$ showing this position (or its prefix) has empty value.
 	\item \textbf{Verification}: Check that:
 	\begin{enumerate}
 		\item The certificate reconstructs the correct root: \\
-		      $\Call{smt\_verify\_inclusion}{\mathsf{sid}_p, d_1, C^\mathsf{exc}, h_{\mathsf{root}}} = \TRUE$ \\
-		      where $\mathsf{sid}_p = p_1 \| \ldots \| p_n$ is the path from the certificate
-		\item The position is either:
-		\begin{itemize}
-			\item Empty: $d_1 = \bot$ (no leaf exists at this location), OR
-			\item Contains a different key: $\mathsf{sid}_p \neq \mathsf{sid}_q$ but shares a common prefix with $\mathsf{sid}_q$ (proving the queried key is absent)
-		\end{itemize}
+		      $\Call{smt\_verify\_inclusion}{k_p, d_1, C^\mathsf{exc}, h_{\mathsf{root}}} = \TRUE$ \\
+		      where $k_p = p_1 \| \ldots \| p_n$ is the path from the certificate
+		\item The position is empty: $d_1 = \bot$ (no leaf exists at this location)
 	\end{enumerate}
 \end{itemize}
 
-The exclusion proof shows the branch where $\mathsf{sid}_q$ would be inserted if it existed, cryptographically proving its absence from the current tree state.
+The exclusion proof shows the branch where $\mathsf{sid}_q$ would be if it existed, cryptographically proving its absence from the current tree state.
