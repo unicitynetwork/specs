@@ -394,3 +394,146 @@ To prove that a key $k_q$ does NOT exist in an SMT:
 \end{itemize}
 
 The exclusion proof shows the branch where $\mathsf{sid}_q$ would be if it existed, cryptographically proving its absence from the current tree state.
+
+\subsection{Consistency Proofs}\label{app:smt-consistency-proof}
+
+A \emph{Consistency Proof} for a Sparse Merkle Tree validates one round of operation by proving that the state transition from previous SMT root hash $h'$ to current SMT root hash $h$ was performed correctly: only new leaves were added, and no pre-existing leaves were removed or modified.
+
+\subsubsection{Structure}
+
+For a batch of state transitions processed in a single round, the consistency proof $\pi_{CP}$ is a tuple:
+\[
+\pi_{CP} = (B, \Pi)
+\]
+where:
+\begin{itemize}
+	\item $B = \langle (\mathsf{sid}_1, h_{\mathsf{tx},1}), (\mathsf{sid}_2, h_{\mathsf{tx},2}), \ldots, (\mathsf{sid}_j, h_{\mathsf{tx},j}) \rangle$ -- batch of new SMT leaves, where each $\mathsf{sid}_i$ is a state identifier and $h_{\mathsf{tx},i}$ is the corresponding transaction hash
+	\item $\Pi$ -- proof data containing sibling hashes needed for verification
+\end{itemize}
+
+The proof data $\Pi$ is organized by tree depth layers for efficient verification. For each newly inserted leaf, the sibling nodes on the path from the leaf to the root are collected. Siblings that are computable from other leaves in the batch are omitted.
+
+\subsubsection{Function $\textsc{smt\_generate\_consistency\_proof}$}\label{sec:smt-generate-consistency-proof}
+
+Generates a consistency proof for a batch of new leaves inserted into an SMT\footnote{Complete algorithm: \href{https://github.com/unicitynetwork/zkvm-ndsmt/blob/b3ee2ab20b3803100459a4b36b6cef405d175865/script/ndsmt.py\#L42}{github.com/../ndsmt.py}}.
+
+\textbf{Input}:
+\begin{enumerate}
+	\item $B$ -- batch of new leaves to insert
+	\item $h'$ -- SMT root hash before the round
+	\item SMT state before the round
+\end{enumerate}
+
+\textbf{Output}: $\pi_{CP} = (B, \Pi)$ and updated SMT with root hash $h$
+
+\textbf{Process}:
+\begin{enumerate}
+	\item Insert all leaves from batch $B$ into the SMT
+	\item Compute new root hash $h$
+	\item For each newly inserted leaf $(\mathsf{sid}_i, h_{\mathsf{tx},i})$:
+	\begin{enumerate}
+		\item Collect sibling nodes on the path from leaf to root
+		\item Discard siblings that are present in batch $B$ or computable from it
+	\end{enumerate}
+	\item Organize remaining siblings by depth layers into $\Pi$
+	\item Return $(B, \Pi)$
+\end{enumerate}
+
+\subsubsection{Function $\textsc{smt\_verify\_consistency\_proof}$}\label{sec:smt-verify-consistency-proof}
+
+Verifies that a consistency proof correctly demonstrates the state transition from previous root hash $h'$ to current root hash $h$.
+
+\textbf{Input}:
+\begin{enumerate}
+	\item $\pi_{CP} = (B, \Pi)$ -- consistency proof where $B = \langle (\mathsf{sid}_1, h_{\mathsf{tx},1}), \ldots, (\mathsf{sid}_j, h_{\mathsf{tx},j}) \rangle$
+	\item $h'$ -- previous SMT root hash (before the round)
+	\item $h$ -- current SMT root hash (after the round)
+\end{enumerate}
+
+\textbf{Output}: \TRUE or \FALSE
+
+\textbf{Computation}:
+\begin{algorithmic}
+	\Function{smt\_verify\_consistency\_proof}{$\pi_{CP}, h', h$}
+		\State $(B, \Pi) \gets \pi_{CP}$
+		\State $B_\emptyset \gets \langle (\mathsf{sid}_1, \emptyset), (\mathsf{sid}_2, \emptyset), \ldots, (\mathsf{sid}_j, \emptyset) \rangle$ \Comment{Empty leaves}
+		\State $h_\emptyset \gets \Call{smt\_compute\_tree\_root}{\Pi, B_\emptyset}$ \Comment{Compute root with empty leaves}
+		\If {$h_\emptyset \neq h'$} \Return \FALSE \EndIf \Comment{Verify previous state}
+		\State $h_B \gets \Call{smt\_compute\_tree\_root}{\Pi, B}$ \Comment{Compute root with actual leaves}
+		\If {$h_B \neq h$} \Return \FALSE \EndIf \Comment{Verify current state}
+		\State \Return \TRUE
+	\EndFunction
+\end{algorithmic}
+
+\subsubsection{Function $\textsc{smt\_compute\_tree\_root}$}\label{sec:smt-compute-tree-root}
+
+Computes the SMT root hash from a batch of leaves and proof siblings.
+
+\textbf{Input}:
+\begin{enumerate}
+	\item $\Pi$ -- proof data organized by depth layers
+	\item $B$ -- batch of leaves $\langle (\mathsf{sid}_1, v_1), \ldots, (\mathsf{sid}_j, v_j) \rangle$
+\end{enumerate}
+
+\textbf{Output}: Root hash $h_{\mathsf{root}}$
+
+\textbf{Computation}:
+\begin{algorithmic}
+	\Function{smt\_compute\_tree\_root}{$\Pi, B$}
+		\State $L \gets B$ \Comment{Current layer, initially leaves}
+		\For{$\ell \gets 0$ to $d-1$} \Comment{For each tree depth layer}
+			\State $L' \gets []$ \Comment{Next layer}
+			\State $m \gets 0$; $n \gets 0$ \Comment{Indices into $L$ and $\Pi[\ell]$}
+			\While{$m < |L|$}
+				\State $(\mathsf{sid}_k, v_k) \gets L[m]$
+				\State $\mathsf{sid}_p \gets \lfloor \mathsf{sid}_k / 2 \rfloor$ \Comment{Parent identifier}
+				\State $\mathsf{isRight} \gets \mathsf{sid}_k \bmod 2$
+				\State $\mathsf{sid}_s \gets 2 \cdot \mathsf{sid}_p + (1 - \mathsf{isRight})$ \Comment{Sibling identifier}
+				\If{$\neg\mathsf{isRight} \land m+1 < |L| \land L[m+1].\mathsf{sid} = \mathsf{sid}_s$}
+					\State $v_s \gets L[m+1].v$ \Comment{Sibling is next in layer}
+					\State $m \gets m + 1$ \Comment{Skip sibling}
+				\ElsIf{$n < |\Pi[\ell]| \land \Pi[\ell][n].\mathsf{sid} = \mathsf{sid}_s$}
+					\State $v_s \gets \Pi[\ell][n].v$ \Comment{Sibling from proof}
+					\State $n \gets n + 1$
+				\Else
+					\State $v_s \gets \emptyset$ \Comment{Sibling is empty}
+				\EndIf
+				\State $v_p \gets H(p_\ell, v_k, v_s)$ \textbf{if} $\mathsf{isRight}$ \textbf{else} $H(p_\ell, v_s, v_k)$
+				\State $L' \gets L' \| [(\mathsf{sid}_p, v_p)]$
+				\State $m \gets m + 1$
+			\EndWhile
+			\State $L \gets L'$
+		\EndFor
+		\If{$|L| \neq 1$} \Return $\bot$ \EndIf \Comment{Must have exactly one root}
+		\State \Return $L[0].v$ \Comment{Root hash}
+	\EndFunction
+\end{algorithmic}
+
+\noindent where $p_\ell$ is the path segment for layer $\ell$.
+
+\subsection{ZK-Compressed Consistency Proofs}\label{app:zk-consistency-proof}
+
+For high-throughput scenarios with large batches, the hash-based consistency proof size of $O(j \cdot d)$ (where $j$ is the batch size and $d$ is the tree depth) may become a bandwidth bottleneck. Cryptographic zero-knowledge proofs (ZK-SNARKs or ZK-STARKs) can compress the consistency proof to constant ($O(1)$) or logarithmic ($O(\log j)$) size while maintaining tight security guarantees.
+
+\subsubsection{ZK Proof Structure}
+
+A ZK-compressed consistency proof proves successful execution of the $\mathsf{smt\_verify\_consistency\_proof}$ algorithm (Appendix~\ref{sec:smt-verify-consistency-proof}) with the following parameters:
+
+\begin{itemize}
+	\item \textbf{Public inputs (instance)}: Values that must match the Input Record in the Certification Request:
+	\begin{itemize}
+		\item $h'$ -- previous SMT root hash (matches $\mathcal{IR}.h'$)
+		\item $h$ -- current SMT root hash (matches $\mathcal{IR}.h$)
+		\item $j$ -- number of leaves in batch (matches $\ell_B$ in the Certification Request)
+	\end{itemize}
+	\item \textbf{Private inputs (witness)}: proof $(B, \Pi)$
+\end{itemize}
+
+\subsubsection{Verification}
+
+When receiving a ZK-compressed consistency proof, the verifier must:
+\begin{enumerate}
+	\item Verify that the proof is proving the right statement (hash-based consistency proof verification algorithm)
+	\item Verify the ZK proof, obtaining authentic public inputs $h'$, $h$, and $j$
+	\item Confirm these values match the claimed Input Record
+\end{enumerate}
