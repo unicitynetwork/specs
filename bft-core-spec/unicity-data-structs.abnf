@@ -26,18 +26,18 @@
 ; BFT CORE (internal data structures)
 
 ; --- Internal Consensus Structures ---
-  LedgerCommitInfo = UnicitySeal
+  LedgerCommitInfo = UnicitySeal | UnicityTrustBaseEntry ; seal without signatures
   QC = VoteInfo LedgerCommitInfo *Signatures
 
   VoteInfo = RoundInfo
-  RoundInfo = RoundNumber Epoch Timestamp ParentRoundNumber CurrentRootHash
+  RoundInfo = RoundNumber Epoch Timestamp ParentRoundNumber CurrentRootHash | UnicityTrustBaseEntryHash
 
 ; --- BFT Core Messages ---
   VoteMsg = VoteInfo LedgerCommitInfo HighQC Author Signature
 
   ProposalMsg = BlockData [LastRoundTc] Signature
   BlockData   = Author Round Epoch Timestamp Payload AncestorQC
-  Payload     = *IRChangeReq | RCEpochChangeReq
+  Payload     = *IRChangeReq | RPEpochChangeReq
   IRChangeReq = PartitionIdentifier CertReason *CR [EpochChangeJustification] SenderSignature
               ; presence of justification ==> epoch++
   RPEpochChangeReq = Epoch *(NodeID Pubkey Stake) QuorumThreshold StateHash ChangeRecordHash PreviousEntryHash SenderSignature [ChangeRecord]
@@ -62,11 +62,6 @@
 
   CR = NetworkIdentifier PartitionIdentifier Shard NodeIdentifier IR BatchSize StateSize Signature [ConsistencyProof]
   ; Certification Request $CR = \langle \alpha, \beta, \sigma, \nu; \mathcal{IR},\ell_B,\ell_S; s; [\pi_{CP}]\rangle$
-  ; ConsistencyProof is optional - can be hash-based or ZK-compressed
-  ; Hash-based: full proof (B, Pi) for BFT Core to verify state transition
-  ; ZK-compressed: SNARK/STARK with public params matching IR
-  ;  if prevStateTreeHash is already 'extended' with UC then return latest UC immediately.
-  ;  otherwise validation and cert. generation continues, cert is returned once available.
   ;  Returned UC can be repeated cert for prevStateTreeHash which triggers next attempt using different leader
   ;  a validator can have multiple pending requests extending the same hash; latest one is identified using IR.n
 
