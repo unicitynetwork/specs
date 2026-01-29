@@ -18,9 +18,9 @@ The Unicity protocol employs a hierarchical three-layer architecture designed fo
 \end{figure}
 
 \begin{description}
-\item[Consensus Layer] PoW chain and BFT Core. Provides token minting, decentralized agreement and finality through Byzantine Fault Tolerant consensus. This layer verifies the integrity of the Aggregation Layer's state transitions and serves as the root of trust for the entire system. The BFT Core certifies SMT root hashes submitted by aggregation clusters.
+\item[Consensus Layer] PoW chain and BFT Core. Provides token minting, decentralized agreement and finality through Byzantine Fault Tolerant consensus. This layer verifies the integrity of the Aggregation Layer's state transitions and serves as the root of trust for the entire system. The BFT Core certifies SMT root hashes submitted by the aggregation layer.
 
-\item[Aggregation Layer] Maintains a global append-only registry of spent token states using sharded Sparse Merkle Trees (SMT). Each cluster within this layer processes state certification requests, provides inclusion proofs, and uses consistency proofs to enable trustless verification. The layer is organized into clusters for service design flexibility, with each cluster potentially divided into shards for horizontal scalability.
+\item[Aggregation Layer] Maintains a global append-only registry of spent token states using sharded Sparse Merkle Trees (SMT). Each partition within this layer processes state certification requests, provides inclusion proofs, and uses consistency proofs to enable trustless verification. The layer is organized into partitions for service design flexibility, with each partition potentially divided into shards for horizontal scalability.
 
 \item[Execution Layer] Handles off-chain transaction processing and business logic. Token transactions occur peer-to-peer between users, with only cryptographic commitments to state transitions submitted to the Aggregation Layer for certification. This design moves computational overhead off-chain while maintaining trustless double-spending prevention.
 \end{description}
@@ -41,7 +41,7 @@ Every sharding scheme $\mathcal{SH}$ induces a sharding function $f_\mathcal{SH}
 
 \section{Networks}
 
-In practice, there will be several instances of Unicity networks, each consisting of its own BFT Core and its own set of clusters. Each such network will have an identifier $\alpha$\index{$\alpha$ (network identifier)}:
+In practice, there will be several instances of Unicity networks, each consisting of its own BFT Core and its own set of partitions. Each such network will have an identifier $\alpha$\index{$\alpha$ (network identifier)}:
 
 \begin{itemize}
 \item $\alpha = 1$ is the public mainnet instance;
@@ -55,23 +55,23 @@ To reduce the risk of confusion, it is recommended for each major deployment to 
 
 It is strongly recommended to avoid using the identifier $0$, so that an uninitialized identifier (which defaults to $0$ in many programming languages) would not match any actual network.
 
-\section{Clusters and Shards}
+\section{Partitions and Shards}
 
-Unicity network's aggregation layer consists of multiple \emph{clusters}\index{cluster}. Each cluster is identified by a cluster identifier $\beta \in \mathbb{C}$\index{$\beta$ (cluster identifier)}\index{$\mathbb{C}$ (cluster identifier type)}. Each cluster runs an unicity proving service instance, or some other utility service instance\footnote{Roughly, this is similar to Layer 1, Layer 2 division of Ethereum type blockchains}.
+Unicity network's aggregation layer consists of multiple \emph{partitions}\index{partition}. Each partition is identified by a partition identifier $\beta \in \mathbb{C}$\index{$\beta$ (partition identifier)}\index{$\mathbb{C}$ (partition identifier type)}. Each partition runs an unicity proving service instance, or some other utility service instance\footnote{Roughly, this is similar to Layer 1, Layer 2 division of Ethereum type blockchains}.
 
-A cluster may be divided into one or more \emph{shards}\index{shard} according to a sharding scheme (Sec.~\ref{sec:sharding}). Each shard is implemented by one or more \emph{aggregation layer nodes}\index{aggregation layer node} that maintain the SMT for their portion of the key space.
+A partition may be divided into one or more \emph{shards}\index{shard} according to a sharding scheme (Sec.~\ref{sec:sharding}). Each shard is implemented by one or more \emph{aggregation layer nodes}\index{aggregation layer node} that maintain the SMT for their portion of the key space.
 
-\section{Cluster Type and Cluster Type Descriptor}
+\section{Partition Type and Partition Type Descriptor}
 
-Every aggregation cluster in the Unicity Framework with cluster identifier $\beta$ has a type that is either:
+Every aggregation partition in the Unicity Framework with partition identifier $\beta$ has a type that is either:
 \begin{enumerate}
 \item a \emph{standard type} (SMT), or
 \item a \emph{defined type} that is described as a data structure of type $\mathbb{SD}$.
 \end{enumerate}
 
-\subsection{Cluster Type Descriptor}
+\subsection{Partition Type Descriptor}
 
-A \emph{cluster type descriptor} is a tuple $\mathcal{SD} = (\mathsf{hf}, \mathbb{CP}, V_{CP}, \gamma_{CP}) \in \mathbb{SD}$, where:
+A \emph{partition type descriptor} is a tuple $\mathcal{SD} = (\mathsf{hf}, \mathbb{CP}, V_{CP}, \gamma_{CP}) \in \mathbb{SD}$, where:
 \begin{itemize}
 \item $\mathsf{hf}$ -- hash function identifier (e.g., SHA-256)  % or version number
 %\item $\mathsf{enc}$ -- encoding scheme identifier (e.g., CBOR for SMT serialization)
@@ -80,29 +80,29 @@ A \emph{cluster type descriptor} is a tuple $\mathcal{SD} = (\mathsf{hf}, \mathb
 \item $\gamma_{CP} \colon \mathbb{IR} \times \mathbb{CP} \to \bool$ -- consistency proof verification predicate
 \end{itemize}
 
-For the SMT-based aggregation, the cluster maintains a sparse Merkle tree mapping state identifiers to transaction hashes. The hash function $\mathsf{hf}$ is used for all cryptographic operations, and the encoding scheme $\mathsf{enc}$ specifies how data structures are serialized before hashing (see Sec.~\ref{sec:smt} for SMT structure).
+For the SMT-based aggregation, the partition maintains a sparse Merkle tree mapping state identifiers to transaction hashes. The hash function $\mathsf{hf}$ is used for all cryptographic operations, and the encoding scheme $\mathsf{enc}$ specifies how data structures are serialized before hashing (see Sec.~\ref{sec:smt} for SMT structure).
 
-The \emph{consistency proof}\index{consistency proof} is an opaque data structure that allows BFT Core nodes to verify that aggregation layer shard nodes correctly performed SMT manipulations during a round. The actual mechanism and content of consistency proofs will be defined separately for each cluster type.
+The \emph{consistency proof}\index{consistency proof} is an opaque data structure that allows BFT Core nodes to verify that aggregation layer shard nodes correctly performed SMT manipulations during a round. The actual mechanism and content of consistency proofs will be defined separately for each partition type.
 
-\subsection{Standard Cluster Types}
+\subsection{Standard Partition Types}
 
 \textbf{Unicity SMT} ($\mathsf{st} = 1$) -- Sparse Merkle Tree based unicity prover
 
 \textbf{EVM} ($\mathsf{st} = 2$) -- Enshrined EVM runtime
 
-\subsection{Cluster Description Record}
+\subsection{Partition Description Record}
 
-A \emph{cluster description record}\index{$\mathcal{CD}$ (cluster description)}\index{cluster description} is a tuple $\mathcal{CD} = (\alpha, \beta, \mathsf{st}, \mathcal{SD}, \mathcal{SH}) \in \mathbb{CD}$, where:
+A \emph{partition description record}\index{$\mathcal{CD}$ (partition description)}\index{partition description} is a tuple $\mathcal{CD} = (\alpha, \beta, \mathsf{st}, \mathcal{SD}, \mathcal{SH}) \in \mathbb{CD}$, where:
 \begin{itemize}
 \item $\alpha \in \mathbb{A}$ is the network identifier;
-\item $\beta \in \mathbb{C}$ is the cluster identifier;
+\item $\beta \in \mathbb{C}$ is the partition identifier;
 \item $\mathsf{st} \in \mathbb{ST}$ is the system type identifier (for standard types, $\mathsf{st} > 0$);
 \item $\mathcal{SD} \in \mathbb{SD}\opt$ is the system type descriptor (exists if $\mathsf{st} = 0$);
 \item $\mathcal{SH} \in \mathbb{SH}$ is the sharding scheme.
 \end{itemize}
 
 Instead of $\mathcal{CD}.\mathcal{SD}.x$ (where $x$ is any field of $\mathcal{SD}$), we use the shorthand notation $\mathcal{CD}.x$.
-For standard type clusters, the field $\mathcal{CD}.\mathcal{SD}$ does not exist. In this case, the notation $\mathcal{CD}.x$ will mean the constant value of $x$ of the standard type $\mathsf{st}$.
+For standard type partitions, the field $\mathcal{CD}.\mathcal{SD}$ does not exist. In this case, the notation $\mathcal{CD}.x$ will mean the constant value of $x$ of the standard type $\mathsf{st}$.
 
 \section{Unicity Service Request}
 
@@ -307,18 +307,18 @@ For the single shard case, $\mathsf{CompShardTreeCert}((\emptystr, \bot), IR, h_
 
 \emph{Unicity Tree Certificate}\index{$C^\mathsf{uni}$ (unicity tree certificate)}\index{unicity tree certificate} (Fig.~\ref{fi:uc}) is a tuple $C^\mathsf{uni} = (\beta, \mathsf{dhash}; (\beta_2, h_2), \ldots, (\beta_\ell, h_\ell))$, where:
 \begin{enumerate}
-	\item $\beta$ -- cluster identifier of type $\mathbb{C}$
-	\item $\mathsf{dhash}$ -- cluster description hash of type $\hashtype$
-	\item $(\beta_2, h_2), \ldots, (\beta_\ell, h_\ell)$ -- a sequence of cluster identifier and sibling hash pairs
+	\item $\beta$ -- partition identifier of type $\mathbb{C}$
+	\item $\mathsf{dhash}$ -- partition description hash of type $\hashtype$
+	\item $(\beta_2, h_2), \ldots, (\beta_\ell, h_\ell)$ -- a sequence of partition identifier and sibling hash pairs
 \end{enumerate}
 
 \subsubsection{Creation: $\mathsf{CreateUnicityTreeCert}$}\label{se:create-unicity-tree-cert}\index{functions!CreateUnicityTreeCert}
 
 \textbf{Input}:
 \begin{enumerate}
-	\item $\beta$ -- cluster identifier of type $\mathbb{C}$
-	\item $\mathcal{C}$ -- set of cluster identifiers of type $\mathbb{C}$
-	\item $\mathcal{CD}$ -- cluster description of type $\mathbb{CD}[\mathcal{C}]$
+	\item $\beta$ -- partition identifier of type $\mathbb{C}$
+	\item $\mathcal{C}$ -- set of partition identifiers of type $\mathbb{C}$
+	\item $\mathcal{CD}$ -- partition description of type $\mathbb{CD}[\mathcal{C}]$
 	\item $\mathcal{IH}$ -- input hashes of type $\hashtype[\mathcal{C}]$
 \end{enumerate}
 
@@ -326,7 +326,7 @@ For the single shard case, $\mathsf{CompShardTreeCert}((\emptystr, \bot), IR, h_
 
 \textbf{Computation}:
 \begin{algorithmic}
-	\State $n \gets \len{\mathcal{C}}$ \Comment{Number of clusters}
+	\State $n \gets \len{\mathcal{C}}$ \Comment{Number of partitions}
 	\State $C \gets \mathsf{sorted}(\mathcal{C})$ \Comment{Sorted list}
 	\For{$i \gets 1 \ldots n$}
 		\State $x_i \gets H(\mathcal{IH}[C_i] \mathbin{\|} H(\mathcal{CD}[C_i]))$
@@ -497,7 +497,7 @@ A valid consistency proof guarantees: (1) \textbf{Append-only property}: No exis
 
 \subsection{Shard Input Record}\label{shard-input-record}
 
-\emph{Shard input record} ($IR$)\index{$IR$ (input record)} of a shard of a cluster (of type $\mathbb{IR}$) is a tuple $(n, e, h', h, t)$, where:
+\emph{Shard input record} ($IR$)\index{$IR$ (input record)} of a shard of a partition (of type $\mathbb{IR}$) is a tuple $(n, e, h', h, t)$, where:
 \begin{enumerate}
 	\item $n$ -- shard's round number of type $\uint{64}$
 	\item $e$ -- shard's epoch number of type $\uint{64}$
@@ -521,7 +521,7 @@ Statistical record of type $\mathbb{SR}$ is a tuple $\mathsf{SR}=(n_e, \overline
 	\item $\hat{\ell}_B$ -- maximum number of SMT additions processed during a round, of type $\uint{64}$
 \end{enumerate}
 
-There is one Statistical Record of current epoch where the values are being updated, reflecting the current state since the beginning of the epoch; and one invariant Statistical Record of the preceding epoch of every shard of every public cluster.
+There is one Statistical Record of current epoch where the values are being updated, reflecting the current state since the beginning of the epoch; and one invariant Statistical Record of the preceding epoch of every shard of every public partition.
 
 \subsection{Technical Record}\label{technical-record}
 
@@ -535,7 +535,7 @@ Technical record\index{technical record ($\mathbb{TE}$)} of type $\mathbb{TE}$ i
 
 Technical record is delivered with an Unicity Certificate. When a shard is extending the Unicity Certificate with a next round certification attempt, then it must use the suggested values provided in Technical Record.
 
-There is one Technical Record for every shard of every cluster, providing synchronization for the next round.
+There is one Technical Record for every shard of every partition, providing synchronization for the next round.
 
 \subsection{Shard Info}
 
@@ -553,13 +553,13 @@ There is one Technical Record for every shard of every cluster, providing synchr
 
 \subsection{Shard Tree}\label{se:shard-tree}
 
-For a cluster $\beta$, let $\mathcal{SH}_\beta = \mathcal{CD}[\beta].\mathcal{SH}$, and
+For a partition $\beta$, let $\mathcal{SH}_\beta = \mathcal{CD}[\beta].\mathcal{SH}$, and
 $\mathcal{IRT}_\beta$ be of type $(\mathbb{IR},\hashtype)[\mathcal{SH}_\beta]$, i.e. for
 every $\beta\in\mathcal{C}$ and $\sigma\in\mathcal{SH}_\beta$, $\mathcal{IRT}_\beta[\sigma]=(\mathcal{IR},h_t)$ (for some $\mathcal{IR}$ and $h_t$).
 
 If there is no input from a shard to certify then $\mathcal{IRT}_\beta[\sigma] = \mathcal{IRT}_\beta[\sigma]_-$, that is, the value from the previously built Shard Tree is used. If there is no previous value then $\mathcal{IRT}_\beta[\sigma] = \zerohash$.
 
-Shard tree\index{shard tree} for a cluster $\beta$ is a function $\chi_\beta \colon \overline{\mathcal{SH}_\beta} \to \hashtype$ such that:
+Shard tree\index{shard tree} for a partition $\beta$ is a function $\chi_\beta \colon \overline{\mathcal{SH}_\beta} \to \hashtype$ such that:
 \begin{enumerate}
 	\item If $\sigma\in\mathcal{SH}_\beta$, then $\chi_\beta(\sigma) = H(\mathcal{IRT}_\beta[\sigma]) =H(\mathcal{IRT}_\beta[\sigma].\mathcal{IR} \mathbin{\|} \mathcal{IRT}_\beta[\sigma].h_t)$.
 	\item If $\sigma\in \overline{\mathcal{SH}_\beta}\backslash\mathcal{SH}_\beta$, then
@@ -595,21 +595,21 @@ For the single shard case, the shard tree is $\{(\emptystr, H(\mathcal{IRT}[\sig
 
 \subsection{Unicity Tree}\index{Unicity Tree}
 
-Unicity Tree is an indexed Merkle tree that aggregates the state of all clusters in the network.
+Unicity Tree is an indexed Merkle tree that aggregates the state of all partitions in the network.
 
 \subsubsection{Creation: $\mathsf{CreateUnicityTree}$}\label{se:create-unicity-tree}\index{functions!CreateUnicityTree}
 
 \textbf{Input}:
 \begin{enumerate}
-	\item $\mathcal{C}$ -- set of cluster identifiers of type $\mathbb{C}$
-	\item $\mathcal{CD}$ -- cluster description of type $\mathbb{CD}[\mathcal{C}]$
+	\item $\mathcal{C}$ -- set of partition identifiers of type $\mathbb{C}$
+	\item $\mathcal{CD}$ -- partition description of type $\mathbb{CD}[\mathcal{C}]$
 	\item $\mathcal{IH}$ -- input hashes of type $\hashtype[\mathcal{C}]$
 \end{enumerate}
 \textbf{Output}: $r$ -- unicity tree root hash of type $\hashtype$
 
 \textbf{Computation}:
 \begin{algorithmic}
-	\State $n \gets \len{\mathcal{C}}$ \Comment{Number of clusters}
+	\State $n \gets \len{\mathcal{C}}$ \Comment{Number of partitions}
 	\State $C \gets \mathsf{sorted}(\mathcal{C})$ \Comment{Sorted list}
 	\For{$i \gets 1 \ldots n$}
 		\State $x_i \gets H(\mathcal{IH}[C_i] \mathbin{\|} H(\mathcal{CD}[C_i]))$
@@ -626,8 +626,8 @@ Unicity Tree is an indexed Merkle tree that aggregates the state of all clusters
 	\item $e$ -- BFT Core's epoch number of type $\uint{64}$
 	\item $r_-$ -- previous root hash of the unicity tree of type $\hashtype$
 	\item $\mathcal{T}$ -- unicity trust base of type $\mathbb{UB}$
-	\item $\mathcal{C}$ -- set of cluster identifiers, with elements of type $\mathbb{C}$
-	\item $\mathcal{CD}$ -- cluster descriptions of type $\mathbb{CD}[\mathbb{C}]$
+	\item $\mathcal{C}$ -- set of partition identifiers, with elements of type $\mathbb{C}$
+	\item $\mathcal{CD}$ -- partition descriptions of type $\mathbb{CD}[\mathbb{C}]$
 	\item $\mathcal{SI}$ -- shard info of type $\mathbb{SI}[\mathbb{C},\{0,1\}^\ast]$
 \end{enumerate}
 
@@ -645,7 +645,7 @@ Epoch number\index{$e$ (epoch number)} can be interpreted as the version number 
 \emph{Certification Request} (CR)\index{certification request (CR)} of a shard is a message $\langle \alpha, \beta, \sigma, \nu; \mathcal{IR}, \ell_B, \ell_S, [\pi_{CP}]; s; \rangle$, where:
 \begin{enumerate}
 	\item $\alpha$ -- network identifier of type $\mathbb{A}$
-	\item $\beta$ -- cluster identifier of type $\mathbb{C}$
+	\item $\beta$ -- partition identifier of type $\mathbb{C}$
 	\item $\sigma$ -- shard identifier of type $\mathbb{SH}$
 	\item $\nu$ -- validator identifier (aggregation layer node identifier) of type $\{0,1\}^\ast$
 	\item $\mathcal{IR}$ -- shard input record of type $\mathbb{IR}$
@@ -662,7 +662,7 @@ Certification requests are sent to the BFT Core by the aggregation layer nodes (
 \emph{Certification Response} (CReS)\index{certification response (CReS)} of a shard is a message $\langle \alpha, \beta, \sigma, \mathsf{TE}; UC \rangle$, where:
 \begin{enumerate}
 	\item $\alpha$ -- network identifier of type $\mathbb{A}$
-	\item $\beta$ -- cluster identifier of type $\mathbb{C}$
+	\item $\beta$ -- partition identifier of type $\mathbb{C}$
 	\item $\sigma$ -- shard identifier of type $\mathbb{SH}$
 	\item $\mathsf{TE}$ -- technical record of type $\mathbb{TE}$
 	\item $UC$ -- certified unicity certificate
@@ -673,7 +673,7 @@ Certification response is sent by the BFT Core to the nodes of an aggregation la
 \section{Functional Description of the BFT Core}
 
 \index{BFT Core!functional description}
-During every round, the BFT Core receives certification requests from the shards of clusters
+During every round, the BFT Core receives certification requests from the shards of partitions
 $\beta \in \mathcal{C}$.
 
 The BFT Core certifies the SMT root hashes provided by the aggregation layer nodes. Each shard maintains an SMT for its portion of the key space. When aggregation layer nodes process Unicity Service Requests (as specified in Sec.~\ref{sec:request-validation}), they update their SMTs by setting leaves. The BFT Core certifies these updates by:
@@ -683,7 +683,7 @@ The BFT Core certifies the SMT root hashes provided by the aggregation layer nod
 	\item Certifying the new root hash via the Unicity Certificate
 \end{enumerate}
 
-As every shard $\sigma$ of a cluster $\beta$ is implemented by a redundant distributed system with certain number $m=|\mathcal{SI}[\beta,\sigma].\mathcal{V}|$ of validator machines, it is possible that several certification requests $\mathsf{CR}_{\beta,\sigma}$ with the same $\mathsf{CR}_{\beta,\sigma}.\mathcal{IR}.h'$ but different $\mathsf{CR}_{\beta,\sigma}.\mathcal{IR}.h$ are received. This is solved by a majority voting mechanism requiring that
+As every shard $\sigma$ of a partition $\beta$ is implemented by a redundant distributed system with certain number $m=|\mathcal{SI}[\beta,\sigma].\mathcal{V}|$ of validator machines, it is possible that several certification requests $\mathsf{CR}_{\beta,\sigma}$ with the same $\mathsf{CR}_{\beta,\sigma}.\mathcal{IR}.h'$ but different $\mathsf{CR}_{\beta,\sigma}.\mathcal{IR}.h$ are received. This is solved by a majority voting mechanism requiring that
 %\begin{enumerate}
 %	\item
 	a required majority, at least $\lfloor m/2\rfloor + 1$ of the dedicated validators, send $\mathsf{CR}_{\beta,\sigma}$ with an identical value of $\mathsf{CR}_{\beta,\sigma}.\mathcal{IR}.h$.
@@ -696,7 +696,7 @@ For every incoming certificate request $\mathsf{CR}=\langle \alpha, \beta, \sigm
 (if any of them fails, $\mathsf{CR}$ is discarded):
 \begin{enumerate}
 \item $\mathsf{CR}.\alpha = \alpha$ -- request came from the same network instance
-\item $\mathsf{CR}.\beta\in \mathcal{C}$ and $\sigma\in \mathcal{CD}[\mathsf{CR}.\beta].\mathcal{SH}$ -- request came from a legitimate shard of a registered cluster
+\item $\mathsf{CR}.\beta\in \mathcal{C}$ and $\sigma\in \mathcal{CD}[\mathsf{CR}.\beta].\mathcal{SH}$ -- request came from a legitimate shard of a registered partition
 \item $\mathsf{CR}.\nu\in \mathcal{SI}[\mathsf{CR}.\beta, \mathsf{CR}.\sigma].\mathcal{V}$ -- request came from an authorized aggregation layer node
 \item $\mathsf{CR}.\mathcal{IR}.n=\mathcal{SI}[\beta,\sigma].n + 1$ -- round number is correctly incremented
 \item $\mathsf{CR}.\mathcal{IR}.e=\mathcal{SI}[\beta,\sigma].e$ -- epoch number matches
@@ -724,7 +724,7 @@ When the BFT Core's round $n$ is completed, then:
 			where $h_\mathsf{sr}=H(\mathcal{SI}[\beta,\sigma].\mathsf{SR}_-, \mathcal{SI}[\beta,\sigma].\mathsf{SR})$
 	\end{enumerate}
 
-	\item For every registered cluster $\beta\in\mathcal{C}$, the collected certification requests $\mathsf{CR}_{\beta,\sigma}$ are converted to a temporary data structure $\mathcal{IRT}_\beta$ of type $(\mathbb{IR},\hashtype)[\mathcal{SH}_\beta]$, where $\mathcal{SH}_\beta=\mathcal{CD}[\beta].\mathcal{SH}$,
+	\item For every registered partition $\beta\in\mathcal{C}$, the collected certification requests $\mathsf{CR}_{\beta,\sigma}$ are converted to a temporary data structure $\mathcal{IRT}_\beta$ of type $(\mathbb{IR},\hashtype)[\mathcal{SH}_\beta]$, where $\mathcal{SH}_\beta=\mathcal{CD}[\beta].\mathcal{SH}$,
 	and $\mathcal{IRT}_\beta[\sigma]=(\mathsf{CR}_{\beta,\sigma}.\mathcal{IR}, H(\mathcal{TE}_{\beta,\sigma}))$; \\
 	if there is no request then respective leaf repeats its previous value. If there is no previous value, the leaf is initialized to $\zerohash$.
 	\item For every $\beta\in\mathcal{C}$, the shard tree $\chi_\beta$  (Sec.~\ref{se:shard-tree}) is created by the function call $\chi_\beta\gets\mathsf{CreateShardTree}(\mathcal{SH}_\beta,\mathcal{IRT}_\beta)$ (Sec.~\ref{se:create-shard-tree}).
