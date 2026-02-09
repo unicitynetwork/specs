@@ -6,10 +6,6 @@
 
 - [PoW Documentation Hub](https://github.com/unicitynetwork/unicity-pow/blob/master/docs/README.md)
 
-### BFT Core
-
-- [BFT Core](bft-core-spec/unicity-bft-core.pdf) is part of the Consensus Layer. Summary of [data structures in ABNF format](bft-core-spec/unicity-data-structs.abnf).
-
 
 ## Aggregation Layer
 
@@ -19,4 +15,9 @@
 
 ## Token Layer
 
-- [Next version](https://github.com/unicitynetwork/execution-model-tex/blob/main/execution-sdk-doc.md) of state transition SDK data structures (initially with reduced feature set)
+
+## General
+
+[Unicity Yellowpaper](https://github.com/unicitynetwork/unicity-yellowpaper-tex/releases/download/latest/unicity-yellowpaper.pdf)
+
+
