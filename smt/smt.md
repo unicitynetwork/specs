@@ -34,7 +34,7 @@ Suppose the inclusion proof for some leaf node is `(path[1], data[1]), (path[2],
 - `hash[1] = hash(path[1], data[1])`
 - if the rightmost bit of `path[1]` is 0, then \
    `hash[2] = hash(path[2], hash[1], data[2])`, else \
-   `hash[2] = hash(path[2], data[2], hash[1])` \
+   `hash[2] = hash(path[2], data[2], hash[1])`
 - ...
 - if the rightmost bit of `path[N-1]` is 0, then \
    `hash[N] = hash(path[N], hash[N-1], data[N])`, else \
